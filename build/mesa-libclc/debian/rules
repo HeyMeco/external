@@ -1,0 +1,44 @@
+#!/usr/bin/make -f
+# Repack the SPIR-V files of the upstream release that matches the tag.
+# Each file must match the SHA256 below. The GitLab package registry of the
+# release (project 27606, package 1273) gives the same SHA256 values.
+# The release mesa-libclc.pc.in has libexecdir=/usr/local/share/mesa-clc.
+# This package writes its own mesa-libclc.pc for /usr.
+include /usr/share/dpkg/pkg-info.mk
+
+PKG = debian/mesa-libclc
+PC_VERSION = 0.2.0
+RELEASE = https://gitlab.freedesktop.org/api/v4/projects/27606/packages/generic/mesa-libclc/$(DEB_VERSION_UPSTREAM)
+SPV = spirv-mesa3d-.spv spirv64-mesa3d-.spv
+
+define SHA256SUMS
+59552f9e22ec221061e9939fc90a46e4159d1400b2e1f85eff46924489d532aa  spirv-mesa3d-.spv
+728cdfa747a1857829c104291984964971783a301a62e9468a3d5a4f1750c949  spirv64-mesa3d-.spv
+endef
+export SHA256SUMS
+
+%:
+	dh $@
+
+# The tree is the libclc source (CMake). Do not configure or build it.
+override_dh_auto_configure override_dh_auto_test:
+
+override_dh_auto_build:
+	test "$(DEB_VERSION_UPSTREAM)" = 22.1.8.3 || { echo "new release: update SHA256SUMS in debian/rules"; exit 1; }
+	mkdir -p debian/release
+	for f in $(SPV); do curl -fsSL --retry 3 -o debian/release/$$f $(RELEASE)/$$f || exit 1; done
+	cd debian/release && printf '%s\n' "$$SHA256SUMS" | sha256sum -c -
+	printf '%s\n' 'prefix=/usr' 'datadir=$${prefix}/share' 'libexecdir=$${datadir}/mesa-clc' '' \
+		'Name: mesa-libclc' 'Description: Library requirements of the OpenCL C programming language' \
+		'Version: $(PC_VERSION)' 'Libs: -L$${libexecdir}' > debian/release/mesa-libclc.pc
+
+override_dh_auto_install:
+	install -d $(PKG)/usr/share/mesa-clc
+	install -m644 $(addprefix debian/release/,$(SPV)) $(PKG)/usr/share/mesa-clc/
+	install -D -m644 debian/release/mesa-libclc.pc $(PKG)/usr/share/pkgconfig/mesa-libclc.pc
+	install -D -m644 LICENSE.TXT $(PKG)/usr/share/doc/mesa-libclc/LICENSE.TXT
+	install -D -m644 CREDITS.TXT $(PKG)/usr/share/doc/mesa-libclc/CREDITS.TXT
+	install -D -m644 README.md $(PKG)/usr/share/doc/mesa-libclc/README.md
+
+override_dh_auto_clean:
+	rm -rf debian/release

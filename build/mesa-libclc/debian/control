@@ -1,0 +1,18 @@
+Source: mesa-libclc
+Section: libs
+Priority: optional
+Maintainer: Armbian <info@armbian.com>
+Build-Depends: debhelper-compat (= 13), curl, ca-certificates
+Standards-Version: 4.7.0
+Homepage: https://gitlab.freedesktop.org/karolherbst/mesa-libclc
+
+Package: mesa-libclc
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: OpenCL C library for Mesa, in SPIR-V
+ The libclc build that Mesa uses for OpenCL (rusticl). It is a fork of
+ LLVM libclc, pinned to a known good state, with fixes for Mesa.
+ .
+ This package holds the SPIR-V files of the upstream release and the
+ mesa-libclc.pc file for the Mesa build.

@@ -252,7 +252,7 @@ upstream:
   # rebase:                       # switch: uncomment to rebase before each build
   #   url: https://gitlab.freedesktop.org/mesa/mesa.git
   #   ref: main
-build_depends: [libdrm, directx-headers, cbindgen]
+build_depends: [libdrm, directx-headers, cbindgen, mesa-libclc]
 repositories: [beta]
 ```
 
@@ -273,7 +273,7 @@ A patch can change `debian/` or the code. To drop a patch of the source package,
 python3 -m extpkg plan --configs build --only mesa --out plan.json
 docker run --rm -v "$PWD:/src" -w /src debian:trixie sh -c '
   apt-get update && apt-get install -y python3 python3-yaml git ca-certificates dpkg-dev build-essential fakeroot patch xz-utils
-  for c in libdrm directx-headers cbindgen; do python3 -m extpkg build --plan plan.json --config $c --release trixie --arch amd64 --out deps; done
+  for c in libdrm directx-headers cbindgen mesa-libclc; do python3 -m extpkg build --plan plan.json --config $c --release trixie --arch amd64 --out deps; done
   python3 -m extpkg build --plan plan.json --config mesa --release trixie --arch amd64 --out built --deps deps'
 ```
 
